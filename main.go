@@ -26,6 +26,10 @@ func main() {
 
 	torchfile.Description = os.ExpandEnv(torchfile.Description)
 
+	for argIndex := range torchfile.Args {
+		torchfile.Args[argIndex] = os.ExpandEnv(torchfile.Args[argIndex])
+	}
+
 	err = torchfile.Run()
 	if err != nil {
 		log.Fatal("Producer error:", err)
