@@ -7,15 +7,25 @@ import(
 	"errors"
 )
 
-type Torchfile struct {
-	Command         string
-	Args            []string
-	Service         string
-	ProducerType    string
-	Elasticsearch   ElasticsearchProducer
-	logChan         chan []byte
-	errChan         chan error
-}
+type(
+	WritePort struct {
+		Enabled bool
+		Port    int
+	}
+
+	Torchfile struct {
+		Command         string
+		Args            []string
+		Service         string
+		ProducerType    string
+		WriteHostname   bool
+		WritePort       WritePort
+		Elasticsearch   ElasticsearchProducer
+		logChan         chan []byte
+		errChan         chan error
+		hostname        string
+	}
+)
 
 func (torchfile Torchfile) Run() error {
 	torchfile.logChan = make(chan []byte, 1024)
@@ -24,7 +34,7 @@ func (torchfile Torchfile) Run() error {
 	switch torchfile.ProducerType {
 	case "elasticsearch":
 		go torchfile.exec()
-		go torchfile.Elasticsearch.write(torchfile.logChan, torchfile.Service)
+		go torchfile.Elasticsearch.write(torchfile.logChan, torchfile.Service, torchfile.hostname, torchfile.WritePort.Port)
 		return <- torchfile.errChan
 	default:
 		return errors.New("No such producer: " + torchfile.ProducerType)
@@ -77,3 +87,7 @@ func (torchfile Torchfile) exec() {
 		return
 	}
 }
+
+// func (torchfile *Torchfile) SetHostname() {
+// 	torchfile.hostname
+// }

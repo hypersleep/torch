@@ -17,6 +17,11 @@ Simple STDOUT/STDERR log forwarder & appication supervisor aimed to microservice
 	"Args":["ya.ru"],
 	"Service":"yaru_checker",
 	"ProducerType":"elasticsearch",
+	"WriteHostname":true,
+	"WritePort":{
+		"Enabled":false,
+		"Port":12345
+	},
 	"Elasticsearch":{
 		"URL":"http://elasticsearch.service.consul:9200/",
 		"Index":"services"
