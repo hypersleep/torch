@@ -24,7 +24,7 @@ func main() {
 		log.Fatal("Failed to unmarshal torchfile:", err)
 	}
 
-	torchfile.Description = os.ExpandEnv(torchfile.Description)
+	torchfile.Service = os.ExpandEnv(torchfile.Service)
 
 	for argIndex := range torchfile.Args {
 		torchfile.Args[argIndex] = os.ExpandEnv(torchfile.Args[argIndex])

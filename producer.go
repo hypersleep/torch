@@ -17,11 +17,11 @@ type ElasticsearchProducer struct {
 
 type ElasticsearchMessage struct {
 	Message     string    `json:"Message"`
-	Description string    `json:"description"`
+	Service string    `json:"Service"`
 	Timestamp   time.Time `json:"@timestamp"`
 }
 
-func (esProducer ElasticsearchProducer) write(logChan chan []byte, description string) {
+func (esProducer ElasticsearchProducer) write(logChan chan []byte, service string) {
 	client, err := elastic.NewClient(elastic.SetURL(esProducer.URL))
 	if err != nil {
 		log.Println(err)
@@ -39,7 +39,7 @@ func (esProducer ElasticsearchProducer) write(logChan chan []byte, description s
 
 		message := ElasticsearchMessage{
 			Message: line,
-			Description: description,
+			Service: service,
 			Timestamp: timeNow,
 		}
 		_, err = client.Index().

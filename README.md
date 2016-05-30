@@ -15,7 +15,7 @@ Simple STDOUT/STDERR log forwarder & appication supervisor aimed to microservice
 {
 	"Command":"ping",
 	"Args":["ya.ru"],
-	"Description":"yaru_checker",
+	"Service":"yaru_checker",
 	"ProducerType":"elasticsearch",
 	"Elasticsearch":{
 		"URL":"http://elasticsearch.service.consul:9200/",

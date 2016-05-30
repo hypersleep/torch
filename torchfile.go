@@ -10,7 +10,7 @@ import(
 type Torchfile struct {
 	Command         string
 	Args            []string
-	Description     string
+	Service         string
 	ProducerType    string
 	Elasticsearch   ElasticsearchProducer
 	logChan         chan []byte
@@ -24,7 +24,7 @@ func (torchfile Torchfile) Run() error {
 	switch torchfile.ProducerType {
 	case "elasticsearch":
 		go torchfile.exec()
-		go torchfile.Elasticsearch.write(torchfile.logChan, torchfile.Description)
+		go torchfile.Elasticsearch.write(torchfile.logChan, torchfile.Service)
 		return <- torchfile.errChan
 	default:
 		return errors.New("No such producer: " + torchfile.ProducerType)
