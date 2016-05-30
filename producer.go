@@ -35,7 +35,7 @@ func (esProducer ElasticsearchProducer) write(logChan chan []byte, service strin
 	for {
 		line := string(<- logChan)
 		timeNow := time.Now()
-		index := esProducer.Index + "-" + timeNow.Format("2006-01-2")
+		index := esProducer.Index + "-" + timeNow.Format("2006.01.2")
 
 		message := ElasticsearchMessage{
 			Message: line,
