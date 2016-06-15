@@ -16,11 +16,10 @@ Simple STDOUT/STDERR log forwarder & appication supervisor aimed to microservice
 	"Command":"ping",
 	"Args":["ya.ru"],
 	"Service":"yaru_checker",
-	"ProducerType":"elasticsearch",
 	"WriteHostname":true,
 	"WritePort":{
 		"Enabled":false,
-		"Port":12345
+		"Port":"12345"
 	},
 	"Elasticsearch":{
 		"URL":"http://elasticsearch.service.consul:9200/",
@@ -33,4 +32,46 @@ Simple STDOUT/STDERR log forwarder & appication supervisor aimed to microservice
 
 `$ torch`
 
-3.Enjoy logs in elasticsearch/kibana!
+3.Enjoy logs in realtime:
+
+```
+$ torch -l -f -n 10
+
+```
+
+_PRO TIP_
+
+Follow all logs from all services in index:
+
+```
+$ torch -l -f -a
+
+```
+
+## Options
+
+All fields in Torchfile (except Command and boolean fields) are expandable by environment variables:
+
+```
+$ export CHECKER_ID=10
+$ export PORT=34534
+$ export INDEX=my-index
+$ export ES_ADDR=http://elasticsearch.service.consul:9200/
+```
+
+```
+{
+	"Command":"ping",
+	"Args":["ya.ru"],
+	"Service":"yaru_checker$CHECKER_ID",
+	"WriteHostname":true,
+	"WritePort":{
+		"Enabled":true,
+		"Port":"$PORT"
+	},
+	"Elasticsearch":{
+		"URL":"$ES_ADDR",
+		"Index":"$INDEX"
+	}
+}
+```
