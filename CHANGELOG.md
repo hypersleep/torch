@@ -1,4 +1,4 @@
-## 0.0.2 (unreleased)
+## 0.0.2
 
 - Rename "Description" -> "Service" #9
 - Fix elasticsearch index name #7
@@ -6,3 +6,4 @@
 - Refactoring (producer.go deleted, some minor fixes)
 - Expand env all field in Torchfile
 - Elasticsearch index viewer cli tool #2
+- Add information/debugging messages #8
