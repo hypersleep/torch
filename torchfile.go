@@ -46,34 +46,6 @@ type(
 	}
 )
 
-func (torchfile Torchfile) Run() error {
-	torchfile.logChan = make(chan []byte, 1024)
-	torchfile.errChan = make(chan error)
-
-	logPtr := flag.Bool("l", false, "Show service logs")
-	logAllPtr := flag.Bool("a", false, "Show all logs from all services in index")
-	followPtr := flag.Bool("f", false, "Follow log updates(like 'tail -f')")
-	followNumberPtr := flag.Int("n", 50, "Number of preloaded lines from log")
-	flag.Parse()
-
-	client, err := elastic.NewClient(elastic.SetURL(torchfile.Elasticsearch.URL))
-	if err != nil {
-		return err
-	}
-
-	torchfile.client = client
-
-	if *logPtr {
-		go torchfile.fetch(*logAllPtr, *followPtr, *followNumberPtr)
-		go torchfile.print()
-	} else {
-		go torchfile.exec()
-		go torchfile.write()
-	}
-
-	return <- torchfile.errChan
-}
-
 func (torchfile Torchfile) exec() {
 	cmd := exec.Command(torchfile.Command, torchfile.Args...)
 
@@ -105,11 +77,16 @@ func (torchfile Torchfile) exec() {
 		}
 	}()
 
+	log.Println("Executing application...")
+
 	err = cmd.Start()
 	if err != nil {
+		log.Println("Application exited with error")
 		torchfile.errChan <- err
 		return
 	}
+
+	log.Println("Application is running")
 
 	err = cmd.Wait()
 	if err != nil {
@@ -277,4 +254,32 @@ func ReadTorchfile() ([]byte, error) {
 	filenameEnv := os.Getenv("TORCHFILE")
 	if filenameEnv != "" {filename = filenameEnv}
 	return ioutil.ReadFile(filename)
+}
+
+func (torchfile Torchfile) Run() error {
+	torchfile.logChan = make(chan []byte, 1024)
+	torchfile.errChan = make(chan error)
+
+	logPtr := flag.Bool("l", false, "Show service logs")
+	logAllPtr := flag.Bool("a", false, "Show all logs from all services in index")
+	followPtr := flag.Bool("f", false, "Follow log updates(like 'tail -f')")
+	followNumberPtr := flag.Int("n", 50, "Number of preloaded lines from log")
+	flag.Parse()
+
+	client, err := elastic.NewClient(elastic.SetURL(torchfile.Elasticsearch.URL))
+	if err != nil {
+		return err
+	}
+
+	torchfile.client = client
+
+	if *logPtr {
+		go torchfile.fetch(*logAllPtr, *followPtr, *followNumberPtr)
+		go torchfile.print()
+	} else {
+		go torchfile.exec()
+		go torchfile.write()
+	}
+
+	return <- torchfile.errChan
 }
