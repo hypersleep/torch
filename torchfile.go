@@ -33,8 +33,6 @@ type(
 	}
 
 	Torchfile struct {
-		Command         string
-		Args            []string
 		Service         string
 		WriteHostname   bool
 		WritePort       WritePort
@@ -46,8 +44,8 @@ type(
 	}
 )
 
-func (torchfile Torchfile) exec() {
-	cmd := exec.Command(torchfile.Command, torchfile.Args...)
+func (torchfile Torchfile) exec(args []string) {
+	cmd := exec.Command(args[0], args[1:len(args)]...)
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -231,10 +229,6 @@ func ParseTorchfile(buf []byte) (*Torchfile, error) {
 	torchfile.Elasticsearch.URL = os.ExpandEnv(torchfile.Elasticsearch.URL)
 	torchfile.Elasticsearch.Index = os.ExpandEnv(torchfile.Elasticsearch.Index)
 
-	for argIndex := range torchfile.Args {
-		torchfile.Args[argIndex] = os.ExpandEnv(torchfile.Args[argIndex])
-	}
-
 	if torchfile.WriteHostname {
 		torchfile.hostname, err = os.Hostname()
 		if err!= nil {
@@ -277,7 +271,7 @@ func (torchfile Torchfile) Run() error {
 		go torchfile.fetch(*logAllPtr, *followPtr, *followNumberPtr)
 		go torchfile.print()
 	} else {
-		go torchfile.exec()
+		go torchfile.exec(flag.Args())
 		go torchfile.write()
 	}
 
