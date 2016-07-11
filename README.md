@@ -13,8 +13,6 @@ Simple STDOUT/STDERR log forwarder & appication supervisor aimed to microservice
 
 ```
 {
-	"Command":"ping",
-	"Args":["ya.ru"],
 	"Service":"yaru_checker",
 	"WriteHostname":true,
 	"WritePort":{
@@ -30,7 +28,7 @@ Simple STDOUT/STDERR log forwarder & appication supervisor aimed to microservice
 
 2.Run torch:
 
-`$ torch`
+`$ torch ping ya.ru`
 
 3.Enjoy logs in realtime:
 
