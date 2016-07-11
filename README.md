@@ -48,7 +48,7 @@ $ torch -l -f -a
 
 ## Options
 
-All fields in Torchfile (except Command and boolean fields) are expandable by environment variables:
+All fields in Torchfile (except boolean fields) are expandable by environment variables:
 
 ```
 $ export CHECKER_ID=10
@@ -59,8 +59,6 @@ $ export ES_ADDR=http://elasticsearch.service.consul:9200/
 
 ```
 {
-	"Command":"ping",
-	"Args":["ya.ru"],
 	"Service":"yaru_checker$CHECKER_ID",
 	"WriteHostname":true,
 	"WritePort":{
