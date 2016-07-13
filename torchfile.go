@@ -102,39 +102,41 @@ func (torchfile Torchfile) write() {
 
 	for {
 		line := string(<- torchfile.logChan)
-		if line != "" {
-			timeNow := time.Now()
-			index := es.Index + "-" + timeNow.Format("2006.01.2")
+		timeNow := time.Now()
+		index := es.Index + "-" + timeNow.Format("2006.01.2")
 
-			message := Message{
-				Message: line,
-				Service: torchfile.Service,
-				Timestamp: timeNow,
-				Hostname: torchfile.hostname,
-				Port: torchfile.WritePort.Port,
-			}
-			_, err = torchfile.client.Index().
-			Index(index).
-			Type("torch").
-			BodyJson(message).
-			Do()
+		message := Message{
+			Message: line,
+			Service: torchfile.Service,
+			Timestamp: timeNow,
+			Hostname: torchfile.hostname,
+			Port: torchfile.WritePort.Port,
+		}
+		_, err = torchfile.client.Index().
+		Index(index).
+		Type("torch").
+		BodyJson(message).
+		Do()
 
-			if err != nil {
-				log.Println(err)
-			}
+		if err != nil {
+			log.Println(err)
 		}
 	}
 }
 
-func (torchfile Torchfile) fetch(logAll bool, follow bool, followNumber int) {
+func (torchfile Torchfile) fetch(logAll bool, follow bool, followNumber int, service string) {
 	var lastTimeStamp time.Time
 	var message Message
 	var termQuery elastic.Query
 
 	index := torchfile.Elasticsearch.Index + "-*"
 
+	if service == "" {
+		service = torchfile.Service
+	}
+
 	if !logAll {
-		termQuery = elastic.NewTermQuery("Service", torchfile.Service)
+		termQuery = elastic.NewTermQuery("Service", service)
 	} else {
 		termQuery = nil
 	}
@@ -258,6 +260,7 @@ func (torchfile Torchfile) Run() error {
 	logAllPtr := flag.Bool("a", false, "Show all logs from all services in index")
 	followPtr := flag.Bool("f", false, "Follow log updates(like 'tail -f')")
 	followNumberPtr := flag.Int("n", 50, "Number of preloaded lines from log")
+	servicePtr := flag.String("s", "", "Service name")
 	flag.Parse()
 
 	client, err := elastic.NewClient(elastic.SetURL(torchfile.Elasticsearch.URL))
@@ -268,7 +271,7 @@ func (torchfile Torchfile) Run() error {
 	torchfile.client = client
 
 	if *logPtr {
-		go torchfile.fetch(*logAllPtr, *followPtr, *followNumberPtr)
+		go torchfile.fetch(*logAllPtr, *followPtr, *followNumberPtr, *servicePtr)
 		go torchfile.print()
 	} else {
 		go torchfile.exec(flag.Args())

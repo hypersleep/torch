@@ -1,6 +1,7 @@
 ## 0.0.3 (unreleased)
 
 - command and args should set as torch args #14
+- add ability to filter output log by service name #16
 
 ## 0.0.2
 

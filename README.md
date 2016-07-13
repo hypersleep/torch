@@ -37,6 +37,18 @@ $ torch -l -f -n 10
 
 ```
 
+or filter by service:
+
+```
+$ torch -l -f -s yaru_checker
+
+```
+
+```
+$ torch -l -f -s googlecom_checker
+
+```
+
 _PRO TIP_
 
 Follow all logs from all services in index:
