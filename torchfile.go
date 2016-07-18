@@ -1,6 +1,7 @@
 package main
 
 import(
+	"io"
 	"os"
 	"fmt"
 	"log"
@@ -41,8 +42,21 @@ type(
 		logChan         chan []byte
 		errChan         chan error
 		hostname        string
+		eof             chan struct{}
 	}
 )
+
+func (torchfile Torchfile) stdReader(r *bufio.Reader) {
+	for {
+		line, err := r.ReadBytes('\n')
+		if err != nil && err.Error() == "EOF" {
+			torchfile.eof <- struct{}{}
+			return
+		}
+		// [:len(line)-1] means cut last \n character
+		torchfile.logChan <- line[:len(line)-1]
+	}
+}
 
 func (torchfile Torchfile) exec(args []string) {
 	cmd := exec.Command(args[0], args[1:len(args)]...)
@@ -59,21 +73,11 @@ func (torchfile Torchfile) exec(args []string) {
 		return
 	}
 
-	go func(){
-		for {
-			r := bufio.NewReader(stdout)
-			line, _, _ := r.ReadLine()
-			torchfile.logChan <- line
-		}
-	}()
+	stdReader := io.MultiReader(stdout, stderr)
+	r := bufio.NewReaderSize(stdReader, 4096)
+	torchfile.eof = make(chan struct{})
 
-	go func(){
-		for {
-			r := bufio.NewReader(stderr)
-			line, _, _ := r.ReadLine()
-			torchfile.logChan <- line
-		}
-	}()
+	go torchfile.stdReader(r)
 
 	log.Println("Executing application...")
 
@@ -87,13 +91,14 @@ func (torchfile Torchfile) exec(args []string) {
 	log.Println("Application is running")
 
 	err = cmd.Wait()
+	<- torchfile.eof
+	time.Sleep(5 * time.Second)
 	if err != nil {
-		// wait for stdout and stderr
-		// TODO: wait for EOF
-		time.Sleep(5 * time.Second)
 		torchfile.errChan <- err
 		return
 	}
+
+	torchfile.errChan <- nil
 }
 
 func (torchfile Torchfile) write() {
@@ -102,6 +107,7 @@ func (torchfile Torchfile) write() {
 
 	for {
 		line := string(<- torchfile.logChan)
+		// log.Println(line)
 		timeNow := time.Now()
 		index := es.Index + "-" + timeNow.Format("2006.01.2")
 
@@ -276,6 +282,7 @@ func (torchfile Torchfile) Run() error {
 	} else {
 		go torchfile.exec(flag.Args())
 		go torchfile.write()
+		// go torchfile.print()
 	}
 
 	return <- torchfile.errChan

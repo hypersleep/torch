@@ -2,6 +2,8 @@
 
 - command and args should set as torch args #14
 - add ability to filter output log by service name #16
+- some log lines cutting #13
+- some log lines lost #12
 
 ## 0.0.2
 
