@@ -4,6 +4,7 @@
 - add ability to filter output log by service name #16
 - some log lines cutting #13
 - some log lines lost #12
+- ability to specify log format in Torchfile #15
 
 ## 0.0.2
 

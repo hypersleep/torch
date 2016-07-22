@@ -8,6 +8,7 @@ import(
 	"flag"
 	"time"
 	"bufio"
+	"errors"
 	"os/exec"
 	"io/ioutil"
 	"encoding/json"
@@ -35,6 +36,7 @@ type(
 
 	Torchfile struct {
 		Service         string
+		Format          Format
 		WriteHostname   bool
 		WritePort       WritePort
 		Elasticsearch   Elasticsearch
@@ -53,8 +55,7 @@ func (torchfile Torchfile) stdReader(r *bufio.Reader) {
 			torchfile.eof <- struct{}{}
 			return
 		}
-		// [:len(line)-1] means cut last \n character
-		torchfile.logChan <- line[:len(line)-1]
+		torchfile.logChan <- line
 	}
 }
 
@@ -103,26 +104,32 @@ func (torchfile Torchfile) exec(args []string) {
 
 func (torchfile Torchfile) write() {
 	var err error
+
 	es := torchfile.Elasticsearch
+	parser := torchfile.Format.parser
 
 	for {
-		line := string(<- torchfile.logChan)
-		// log.Println(line)
+		parser.load(<- torchfile.logChan)
 		timeNow := time.Now()
 		index := es.Index + "-" + timeNow.Format("2006.01.2")
 
-		message := Message{
-			Message: line,
-			Service: torchfile.Service,
-			Timestamp: timeNow,
-			Hostname: torchfile.hostname,
-			Port: torchfile.WritePort.Port,
+		err = parser.parse()
+		if err != nil {
+			log.Println(err)
 		}
+
+		parser.addField("Service", torchfile.Service)
+		parser.addField("@timestamp", timeNow)
+		parser.addField("Hostname", torchfile.hostname)
+		parser.addField("Port", torchfile.WritePort.Port)
+
 		_, err = torchfile.client.Index().
 		Index(index).
 		Type("torch").
-		BodyJson(message).
+		BodyJson(parser.getMessage()).
 		Do()
+
+		parser.clear()
 
 		if err != nil {
 			log.Println(err)
@@ -228,7 +235,7 @@ func ParseTorchfile(buf []byte) (*Torchfile, error) {
 	var err error
 
 	err = json.Unmarshal(buf, &torchfile)
-	if err!= nil {
+	if err != nil {
 		return nil, err
 	}
 
@@ -239,7 +246,7 @@ func ParseTorchfile(buf []byte) (*Torchfile, error) {
 
 	if torchfile.WriteHostname {
 		torchfile.hostname, err = os.Hostname()
-		if err!= nil {
+		if err != nil {
 			return nil, err
 		}
 	}
@@ -247,6 +254,20 @@ func ParseTorchfile(buf []byte) (*Torchfile, error) {
 	if !torchfile.WritePort.Enabled {
 		torchfile.WritePort.Port = ""
 	}
+
+
+	switch torchfile.Format.Value {
+	case "regexp":
+		torchfile.Format.parser = &RegexpLine{}
+	case "json":
+		torchfile.Format.parser = &JsonLine{}
+	case "":
+		torchfile.Format.parser = &NullLine{}
+	default:
+		return nil, errors.New("No such log format: " + torchfile.Format.Value)
+	}
+
+	torchfile.Format.parser.setup(torchfile.Format.Options)
 
 	return torchfile, nil
 }
@@ -282,7 +303,6 @@ func (torchfile Torchfile) Run() error {
 	} else {
 		go torchfile.exec(flag.Args())
 		go torchfile.write()
-		// go torchfile.print()
 	}
 
 	return <- torchfile.errChan
