@@ -114,7 +114,7 @@ Torch can use two types of formating: `regexp` and `json`
 
 It writes additional fields `bytes`, `ip`, `icmp_seq`, `ttl` and `time` to elasticsearch.
 
-JSON formating trying to unmarshal log line as JSON object:
+2.`json` formating trying to unmarshal log line as JSON object:
 
 ```
 {

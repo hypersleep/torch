@@ -3,6 +3,7 @@ package main
 import(
 	"regexp"
 	"errors"
+	"strings"
 	"encoding/json"
 )
 
@@ -15,7 +16,7 @@ type(
 
 	Parser interface {
 		setup(options string) error
-		load(line []byte)
+		load(logLine []byte)
 		parse() error
 		clear()
 		addField(name string, value interface{})
@@ -61,21 +62,6 @@ func (regexpLine *RegexpLine) setup(options string) error {
 	return nil
 }
 
-func (nullLine *NullLine) load(line []byte) {
-	nullLine.line = line
-	nullLine.message["Message"] = string(line)
-}
-
-func (jsonLine *JsonLine) load(line []byte) {
-	jsonLine.line = line
-	jsonLine.message["Message"] = string(line)
-}
-
-func (regexpLine *RegexpLine) load(line []byte) {
-	regexpLine.line = line
-	regexpLine.message["Message"] = string(line)
-}
-
 func (nullLine *NullLine) parse() error {
 	return nil
 }
@@ -90,7 +76,6 @@ func (jsonLine *JsonLine) parse() error {
 
 func (regexpLine *RegexpLine) parse() error {
 	result := regexpLine.regexp.FindAllStringSubmatch(string(regexpLine.line), -1)
-
 	if len(result) > 0 {
 		cuttedResult := result[0]
 		names := regexpLine.regexp.SubexpNames()
@@ -100,48 +85,24 @@ func (regexpLine *RegexpLine) parse() error {
 	} else {
 		errors.New("Failed to parse line using regexp: " + string(regexpLine.line))
 	}
-
 	return nil
 }
 
-func (nullLine *NullLine) clear() {
-	for key, _ := range nullLine.message {
-		nullLine.message[key] = nil
+func (line *Line) load(logLine []byte) {
+	line.line = logLine
+	line.message["Message"] = strings.TrimSpace(string(logLine))
+}
+
+func (line *Line) clear() {
+	for key, _ := range line.message {
+		line.message[key] = nil
 	}
 }
 
-func (jsonLine *JsonLine) clear() {
-	for key, _ := range jsonLine.message {
-		jsonLine.message[key] = nil
-	}
+func (line *Line) addField(name string, value interface{}) {
+	line.message[name] = value
 }
 
-func (regexpLine *RegexpLine) clear() {
-	for key, _ := range regexpLine.message {
-		regexpLine.message[key] = nil
-	}
-}
-
-func (nullLine *NullLine) addField(name string, value interface{}) {
-	nullLine.message[name] = value
-}
-
-func (jsonLine *JsonLine) addField(name string, value interface{}) {
-	jsonLine.message[name] = value
-}
-
-func (regexpLine *RegexpLine) addField(name string, value interface{}) {
-	regexpLine.message[name] = value
-}
-
-func (nullLine *NullLine) getMessage() map[string]interface{} {
-	return nullLine.message
-}
-
-func (jsonLine *JsonLine) getMessage() map[string]interface{} {
-	return jsonLine.message
-}
-
-func (regexpLine *RegexpLine) getMessage() map[string]interface{} {
-	return regexpLine.message
+func (line *Line) getMessage() map[string]interface{} {
+	return line.message
 }
