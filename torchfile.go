@@ -51,7 +51,7 @@ type(
 func (torchfile Torchfile) stdReader(r *bufio.Reader) {
 	for {
 		line, err := r.ReadBytes('\n')
-		if err != nil && err.Error() == "EOF" {
+		if err != nil {
 			torchfile.eof <- struct{}{}
 			return
 		}
@@ -75,7 +75,7 @@ func (torchfile Torchfile) exec(args []string) {
 	}
 
 	stdReader := io.MultiReader(stdout, stderr)
-	r := bufio.NewReaderSize(stdReader, 4096)
+	r := bufio.NewReaderSize(stdReader, 8192)
 	torchfile.eof = make(chan struct{})
 
 	go torchfile.stdReader(r)
