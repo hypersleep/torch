@@ -1,3 +1,7 @@
+## 0.0.4
+
+- empty lines hotfix
+
 ## 0.0.3
 
 - command and args should set as torch args #14
