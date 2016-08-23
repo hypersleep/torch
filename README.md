@@ -4,8 +4,12 @@ _A light in dark room while you try to find a black cat._
 
 Simple STDOUT/STDERR log forwarder & appication supervisor aimed to microservices.
 
-**STATUS:** *experimental/alpha*
+## Installation
 
+```
+wget https://github.com/hypersleep/torch/releases/download/0.0.4/torch-linux-64.zip
+unzip torch-linux-64.zip -d /usr/bin
+```
 
 ## Usage
 
